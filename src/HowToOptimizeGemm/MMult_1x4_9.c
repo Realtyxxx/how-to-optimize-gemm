@@ -38,7 +38,7 @@ void AddDot1x4( int k, double *a, int lda,  double *b, int ldb, double *c, int l
 	  
      in the original matrix C.
 
-     In this version, we accumulate in registers and put A( 0, p ) in a register */
+     We next use indirect addressing */
 
   int p;
   register double 
@@ -47,19 +47,53 @@ void AddDot1x4( int k, double *a, int lda,  double *b, int ldb, double *c, int l
        c_00_reg,   c_01_reg,   c_02_reg,   c_03_reg,  
     /* holds A( 0, p ) */
        a_0p_reg;
+  double 
+    /* Point to the current elements in the four columns of B */
+    *bp0_pntr, *bp1_pntr, *bp2_pntr, *bp3_pntr; 
     
+  bp0_pntr = &B( 0, 0 );
+  bp1_pntr = &B( 0, 1 );
+  bp2_pntr = &B( 0, 2 );
+  bp3_pntr = &B( 0, 3 );
+
   c_00_reg = 0.0; 
   c_01_reg = 0.0; 
   c_02_reg = 0.0; 
   c_03_reg = 0.0;
  
-  for ( p=0; p<k; p++ ){
+  for ( p=0; p<k; p+=4 ){
     a_0p_reg = A( 0, p );
 
-    c_00_reg += a_0p_reg * B( p, 0 );     
-    c_01_reg += a_0p_reg * B( p, 1 );     
-    c_02_reg += a_0p_reg * B( p, 2 );     
-    c_03_reg += a_0p_reg * B( p, 3 );     
+    c_00_reg += a_0p_reg * *bp0_pntr;
+    c_01_reg += a_0p_reg * *bp1_pntr;
+    c_02_reg += a_0p_reg * *bp2_pntr;
+    c_03_reg += a_0p_reg * *bp3_pntr;
+
+    a_0p_reg = A( 0, p+1 );
+
+    c_00_reg += a_0p_reg * *(bp0_pntr+1);
+    c_01_reg += a_0p_reg * *(bp1_pntr+1);
+    c_02_reg += a_0p_reg * *(bp2_pntr+1);
+    c_03_reg += a_0p_reg * *(bp3_pntr+1);
+
+    a_0p_reg = A( 0, p+2 );
+
+    c_00_reg += a_0p_reg * *(bp0_pntr+2);
+    c_01_reg += a_0p_reg * *(bp1_pntr+2);
+    c_02_reg += a_0p_reg * *(bp2_pntr+2);
+    c_03_reg += a_0p_reg * *(bp3_pntr+2);
+
+    a_0p_reg = A( 0, p+3 );
+
+    c_00_reg += a_0p_reg * *(bp0_pntr+3);
+    c_01_reg += a_0p_reg * *(bp1_pntr+3);
+    c_02_reg += a_0p_reg * *(bp2_pntr+3);
+    c_03_reg += a_0p_reg * *(bp3_pntr+3);
+
+    bp0_pntr+=4;
+    bp1_pntr+=4;
+    bp2_pntr+=4;
+    bp3_pntr+=4;
   }
 
   C( 0, 0 ) += c_00_reg; 

@@ -6,6 +6,7 @@
 
 /* Routine for computing C = A * B + C */
 
+void AddDot( int, double *, int, double *, double * );
 void AddDot1x4( int, double *, int,  double *, int, double *, int );
 
 void MY_MMult( int m, int n, int k, double *a, int lda, 
@@ -36,34 +37,29 @@ void AddDot1x4( int k, double *a, int lda,  double *b, int ldb, double *c, int l
 
            C( i, j ), C( i, j+1 ), C( i, j+2 ), C( i, j+3 ) 
 	  
-     in the original matrix C.
+     in the original matrix C */ 
 
-     In this version, we accumulate in registers and put A( 0, p ) in a register */
+  AddDot( k, &A( 0, 0 ), lda, &B( 0, 0 ), &C( 0, 0 ) );
+  AddDot( k, &A( 0, 0 ), lda, &B( 0, 1 ), &C( 0, 1 ) );
+  AddDot( k, &A( 0, 0 ), lda, &B( 0, 2 ), &C( 0, 2 ) );
+  AddDot( k, &A( 0, 0 ), lda, &B( 0, 3 ), &C( 0, 3 ) );
+}
 
-  int p;
-  register double 
-    /* hold contributions to
-       C( 0, 0 ), C( 0, 1 ), C( 0, 2 ), C( 0, 3 ) */
-       c_00_reg,   c_01_reg,   c_02_reg,   c_03_reg,  
-    /* holds A( 0, p ) */
-       a_0p_reg;
-    
-  c_00_reg = 0.0; 
-  c_01_reg = 0.0; 
-  c_02_reg = 0.0; 
-  c_03_reg = 0.0;
+
+/* Create macro to let X( i ) equal the ith element of x */
+
+#define X(i) x[ (i)*incx ]
+
+void AddDot( int k, double *x, int incx,  double *y, double *gamma )
+{
+  /* compute gamma := x' * y + gamma with vectors x and y of length n.
+
+     Here x starts at location x with increment (stride) incx and y starts at location y and has (implicit) stride of 1.
+  */
  
+  int p;
+
   for ( p=0; p<k; p++ ){
-    a_0p_reg = A( 0, p );
-
-    c_00_reg += a_0p_reg * B( p, 0 );     
-    c_01_reg += a_0p_reg * B( p, 1 );     
-    c_02_reg += a_0p_reg * B( p, 2 );     
-    c_03_reg += a_0p_reg * B( p, 3 );     
+    *gamma += X( p ) * y[ p ];     
   }
-
-  C( 0, 0 ) += c_00_reg; 
-  C( 0, 1 ) += c_01_reg; 
-  C( 0, 2 ) += c_02_reg; 
-  C( 0, 3 ) += c_03_reg;
 }
